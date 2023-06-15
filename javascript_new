@@ -1,0 +1,625 @@
+file:///C:/Web%20Dev%20Simplified/JavaScript%20Simplified%20-%20Beginner.html
+
+
+1. Arrow function with hoisting not working but function(keyword)'s function working
+2. Diff arrow and function keyword function 
+    Ex.
+        button.addEventListener('click', function(e) {
+            console.log(this)  // return current element
+        })
+        button.addEventListener('click', e => {
+            console.log(this)  // return window
+        })
+3. var and function render firstly that's why those are working everywhere
+    3.1. But var is undefined with render firstly
+4. NaN == NaN // output => false --> for compare there are special method for that (isNaN())
+5. When console variable and it's give [object object] output then you can use JSON.stringify() function
+6. Reference Vs Value -> [array and object are reference]
+    6.1. ex.
+        let a = 1 // a = 1
+        let b = 3 // b = 3
+        let c = a // c = 1
+        c = c + 1 // c = 2 
+        console.log(c) // 2
+        console.log(a) // 1 
+
+        refrence ex.
+        let a = [1, 2] // a = 0x01 = [1, 2]
+        let b = 2 // b = 2
+        let c = a // c = 0x01 (this is the a variable reference position) = [1, 2]
+        c.push(3) // c = 0x01 = [1, 2, 3]
+        console.log(c) // [1, 2, 3]
+        console.log(a) // [1, 2, 3]  --> because here is apply reference 
+        - we can also do same with object
+
+        Another reference wiht const ex.
+        const a = [1, 2] // 0x01 = [1, 2]
+        const b = 3 // 3
+        add(a, b) // add(0x01, 3)
+        function add(array, element) {
+            element = element + 1 // i have pass second param b which is const, but then also I can change reassign value as a element because see above line comment, there are second param pass as a hard value 3 so element can change value 3 because this is a number not reference
+            array.push(element)
+        }
+
+7. 0 || '' || flase || "Hi" // output: "Hi" // not false but Hi
+8. try cache is required with async and await if we have to use cache (handle error)
+9. Async await not working with for loop
+    ex.:
+        function data(data) {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve(data)
+                }, 250);
+            })
+        }
+
+        // this is not working at once means I will get console.log after 250 ms every time(loop)
+        async function demo() {
+            for (let i = 0; i < 10; i++) {
+                const data1 = await data(i)
+                console.log(data1)
+            }
+        }
+
+        // so I have to use promise in this time like this
+        // now I got 0 to 10 number in just 250 ms
+        for (let i = 0; i < 10; i++) {
+            data(i).then(data1 => {
+                console.log(data1)
+            })
+        }
+
+10. Event delegation
+    - when I set click addEventListener on document, body and button at that time first console of button->body->document
+    - But I can add capture property for set priority
+        Ex. 
+            - If I want to first run body then
+                document.addEventListener('click', e => {
+                    console.log(e.target)
+                })
+                document.body.addEventListener('click', e => {
+                    console.log(e.target)
+                }, { capture: true })
+                button.addEventListener('click', e => {
+                    console.log(e.target)
+                })
+                // output
+                body
+                button
+                document
+                // otherwise button, body, document
+    - If I want to only run button then I have to add stopPropogation like this
+        Ex.
+            document.addEventListener('click', e => {
+                console.log(e.target)
+            })
+            document.body.addEventListener('click', e => {
+                console.log(e.target)
+            })
+            button.addEventListener('click', e => {
+                e.stopPropogation();
+                console.log(e.target)
+            })
+            // output
+            button
+
+11. Browser Storage
+    localStorage - 10mb
+    cookies - 4kb
+    sessionStorage - 5mb
+
+12. We can create clone of template tag 
+    Ex.:
+        template.content.cloneNode(true)
+
+13. Use find closest parent element using closest()
+14. e.target.matches('#id') // we can use this for match element, which we have set event listener on
+15. No need to add defer in script when type="module" at load script src (ES6)
+16. Export explain (ES6)
+    
+    printUser.js
+    import kaushik, { rutik } from './uesrs.js'
+
+    users.js
+    export default const kaushik = 'kaushik' // It's not valid (because it's not valid syntax for set export default with variable but you can do same with function)
+    export const rutik = 'rutik' // it's valid (because you can set export with variable and function)
+    
+    // if you want to set export default with const variable then you need use following sintax
+    const kaushik = 'kaushik'
+    export default kaushik
+
+    // if you want to set export with seprate line then you can't do
+    const kaushik = 'kaushik'
+    export kaushik // it's not valid (because if you want to export in new line then you can only use export default not only export)
+
+    ----------------------- With function ------------------------
+
+    printUser.js
+    import kaushik, { rutik } from './uesrs.js'
+
+    users.js
+    export default function kaushik() {  } // it's valid
+    export function rutik() { } // it's valid
+    // you can also do following things with function
+    function kaushik() { }
+    function rutik() { }
+    export default kaushik // it's valid
+    export rutik // it's valid
+ 
+    ----------------------- In short ------------------------
+
+    // You can use export and export default with same line or diff line with function
+    // but you want to do same with variable then
+        // - if use export default - then you can not add in same line (complsary add in diff line)
+        // - if use export - then you can not add in diff line (complsary add in same line)
+
+    -----------------------------------------------------------
+
+    // if you want to rename at import file
+    printUser.js
+    import kaushikUser, { rutik as rutikUser } from './uesrs.js'
+
+    users.js
+    export default function kaushik() {  }
+    export function rutik() { }
+
+    // I can use "as" for rename
+    // but I want to do with default then you can do without "as" -- because default export is only one so we don't need to mention
+    // check above code - where kaushikUser (not use "as"), rutik as rutikUser (use "as") 
+
+
+
+Advanced Course
+-------------------
+1. Destructuring
+    - ex.:
+        // with array
+        const array = [1, 2, 3, 4, 5];
+        const [a, b] = array // a=1, b=2
+        const [a, b, c] = array // a=1, b=2, c=3
+        const [a, b, ...c] = array // a=1, b=2, c=[3,4,5]
+        const [a, b, c, , e, f] = array // a=1, b=2, c=3, e=5, f=undefined
+        const [a, b, c, , e, f = 6] = array // a=1, b=2, c=3, e=5, f=6 // we can set default value like f = 6 (same like function default value)
+
+        const array = [1, 2, 3, 4, 5, [6, 7]];
+        const [a, b, c, , e, f] = array // a=1, b=2, c=3, e=5, f=[6,7]
+        const [a, b, c, , e, [f, g]] = array // a=1, b=2, c=3, e=5, f=6, g=7
+        
+        // with object
+        const person = {
+            firstname: kaushik,
+            age: 12,
+            address: {
+                street: "street name",
+                city: "surat"
+            }
+        }
+        const {firstname, age} = person // firstname=kaushik, age=12
+        const {firstname: username, age} = person // username=kaushik (we can rename property like firstname to username), age=12
+
+        const {address} = person // address: {street: "street name", city: "surat"}
+        const {street} = address // street="street name"
+        
+        const {address: { street, city }} = person // address={street: "street name", city: "surat"}, street="street name", city="surat"
+        const {address: { street, zipcode = 123456 }} = person // street="street name", zipcode=123456 --> // we can set default value like zipcode=123456 (same like function default value)
+
+        const {
+            firstname,
+            age,
+            address: {
+                street,
+                city
+            }
+        } = person
+
+        // with function
+        function addAndMultiply(a, b) {
+            return {sum: a + b, product: a * b}
+        }
+
+        const result = addAndMultiply(2, 3);
+        result.sum // 5
+        result.product // 6
+        // or
+        const {sum, product} = addAndMultiply(2, 3) // sum=5, product=6
+        --------
+
+        // with function param
+        // must be same param name (because here is apply distructuring) which we have pass while calling time
+        // if I change param name a to c and b to d then that is not working because we have passed a and b while calling function
+        function addAndMultiply({a, b}) { 
+            return [a + b, a * b] // return array
+        }
+        const {sum, product} = addAndMultiply({a: 2, b: 3}) // not valid  --> sum=undefined, product=undefined  --> because we don't return object from addAndMultiply function but we have return array, so we have to create array when destructuring
+        const [sum, product] = addAndMultiply({a: 2, b: 3}) // valid  --> sum=5, product=6
+
+
+2. Spread and rest operator
+    2.1. we can use for copy (clone) array or object (when we don't want to pass reference)
+        - Ex.:
+            // with array
+            const numberArray = [1, 2, 3]
+
+            const newArray = numberArray // newArray = [1, 2, 3] // numberArray = [1, 2, 3]
+            numberArray.push(4); // newArray = [1, 2, 3, 4] // numberArray = [1, 2, 3, 4]
+
+            const newArray = [...numberArray] // newArray = [1, 2, 3] // numberArray = [1, 2, 3]
+            numberArray.push(4);  // newArray = [1, 2, 3] // numberArray = [1, 2, 3, 4]
+
+            const newArray = [...numberArray, 4]  // newArray = [1, 2, 3, 4] // numberArray = [1, 2, 3]
+
+            const otherNumberArray = [7, 8, 9]
+            const newArray = [...numberArray, ...otherNumberArray] // newArray = [1, 2, 3, 7, 8, 9] // numberArray = [1, 2, 3] // numberArray = [7, 8, 9]
+
+            // with object
+            // same array (which is above mention)
+            const person = { name: "kaushik", age: "12" }
+            const person2 = { name: "mavani", email: "mail" }
+            const newPerson = {...person, ...person2}  // in this scenario newPerson={name: "mavani", age: "12", email: "mail"}  --> name = "mavani" because person2 replace same property with person
+            
+    2.2. We can use for convert node list to array
+        - Ex.: 
+            const divs = document.querySelectorAll('div') // return Node List array not simple array
+            // so we can not use map function using divs variable, because this is node list not array
+            divs.map(div => console.log(div)) // not valid
+
+            // In this scenario we can use spread operator
+            // so we have to first convert node list to array
+            // And we can use spead for that
+            [...divs].map(div => console.log(div)) // it's valid
+            // or
+            // we can direct use spread operation when we create const divs variable like 
+            const divs = [...document.querySelectorAll('div')]
+            divs.map(div => console.log(div)) // it's valid
+
+
+3. Enhanced Object Literals
+    - Ex.:
+        const firstName = "kaushik"
+        const age = 12
+        function sayHi() {
+            console.log("Hi")
+        }
+
+        const obj = {
+            firstName: firstName,
+            age: age,
+            sayHi: sayHi
+        }
+        // we can also use this way
+        const obj = {
+            firstName,
+            age,
+            sayHi
+        }
+
+    - Ex.:
+        const firstName = "kaushik"
+        const age = 12
+
+        const obj = {
+            firstName,
+            age,
+            sayHi: function() {
+                console.log("Hi")
+            }
+        }
+        // or
+        const obj = {
+            firstName,
+            age,
+            sayHi() {
+                console.log("Hi")
+            }
+        }
+
+    -Ex.:
+        const propertyName = "name"
+        const firstName = "kaushik"
+        const age = 12
+
+        const obj = {
+            age,
+            sayHi() {
+                console.log("Hi")
+            }
+        }
+        obj[propertyName] = firstName
+        // or
+        const obj = {
+            [propertyName]: firstName
+            age,
+            sayHi() {
+                console.log("Hi")
+            }
+        }
+
+        // if we want to age property dynamically then
+        const index = 1
+        const obj = {
+            [propertyName]: firstName
+            [`age${index}`]: age,
+            sayHi() {
+                console.log("Hi")
+            }
+        }
+
+
+4. Default params
+    Ex.:
+        function sayHi(firstname, lastname, salutation) {
+            console.log(`${salutation} ${firstname} ${lastname}`)
+        }
+        sayHi("kaushik", "mavani", "Hi") // Hi kaushik mavani
+        sayHi("kaushik", "mavani", "Hello") // Hello kaushik mavani
+
+        // default salutation
+        function sayHi(firstname, lastname, salutation = "Hi") {
+            console.log(`${salutation} ${firstname} ${lastname}`)
+        }
+        sayHi("kaushik", "mavani") // Hi kaushik mavani
+        sayHi("kaushik", "mavani", undefined) // Hi kaushik mavani
+        sayHi("kaushik", "mavani", null) // null kaushik mavani
+
+        // default salutation and suffix (with object)
+        function sayHi(firstname, lastname, {salutation, suffix}) {
+            console.log(`${salutation} ${suffix} ${firstname} ${lastname}`)
+        }
+        sayHi("kaushik", "mavani", {salutation: "Hi", suffix: "Mr"}) // Hi Mr kaushik mavani
+
+        // default salutation and suffix
+        function sayHi(firstname, lastname, {salutation = "Hi", suffix = "Mr"}) {
+            console.log(`${salutation} ${suffix} ${firstname} ${lastname}`)
+        }
+        sayHi("kaushik", "mavani") // not valid --> in this time you got error because sayHi function's third param not set default value, you have set blank object like below
+
+        function sayHi(firstname, lastname, {salutation = "Hi", suffix = "Mr"} = {}) {
+            console.log(`${salutation} ${suffix} ${firstname} ${lastname}`)
+        }
+        sayHi("kaushik", "mavani") // it's valid // Hi Mr kaushik mavani
+
+
+5. Optional Chaining
+    - Ex.:
+        const kaushik = {
+            name: kaushik,
+            age: 12,
+            address: {
+                street: "street name"
+            },
+            sayHi() {
+                console.log("Hi");
+            },
+            hobbies: ["Bolwing", "Typing"]
+        }
+
+        console.log(kaushik && kaushik.address && kaushik.address.street) // "street name"
+        console.log(kaushik?.address?.street) // with object and string
+        console.log(kaushik?.sayHi?.()) // with function
+        console.log(kaushik?.hobbies?.[0]) // with array
+
+6. Getter and setter
+    - Ex.: 
+        const kaushik = {
+            name: kaushik,
+            age: 12,
+            address: {
+                street: "street name"
+            },
+            get username() {
+                return this.name
+            },
+            set username(name) {
+                this.name = name
+            }
+        }
+        console.log(kaushik.username) // I can use username function as a property name(without parenthesis)
+        kaushik.username = "kaushik" // I can set username in this way
+
+7. call, apply and bind
+    - Ex.:
+        const kaushik = {
+            name: "kaushik",
+            age: 12
+        }
+        const rutik = {
+            name: "rutik",
+            age: 12
+        }
+        function username() {
+            console.log(this.name)
+        }
+        function setUsername(name, age) {
+            this.name = name
+            this.age = age
+            console.log(this.name, this.age)
+        }
+
+        // we don't need to add username function in above kaushik and rutik both object
+        // in this time we can use call, apply and bind method
+
+        // call method
+        username.call(kaushik) // "kaushik"
+        username.call(rutik) // "rutik"
+        setUsername.call(kaushik, "kaushik1", 14) // "kaushik1" 14
+
+        // apply method
+        // apply is same like call but diff is the only pass param 
+        // in call we have to pass param one by one as we have done above
+        // but in apply we have to pass param in array something like
+        username.apply(kaushik) // "kaushik"
+        username.apply(rutik) // "rutik"
+        setUsername.apply(kaushik, ["kaushik1", 14]) // "kaushik1" 14
+
+        // bind method
+        // as we see call and apply methods are run imidiatly whan we write function
+        // but not we can defind ahead and use any time something like
+        username.bind(kaushik) // its return function (username())
+        // if we want to call imidiatly same like call and apply then
+        username.bind(kaushik)() // "kaushik"
+        username.bind(rutik)() // "rutik"
+        setUsername.bind(kaushik, "kaushik1", 14)() // "kaushik1" 14
+
+        // another example // in this scenario bind is more useful
+        function multiply(a, b) {
+            console.log(a * b)
+        }
+        const arr = [1,2,3,4,5];
+        arr.forEach(e => multiply.call(null, 2, e)); //2 4 6 8 10 // a = 2, b = array element
+        arr.forEach(e => multiply.apply(null, [2, e])); //2 4 6 8 10 // a = 2, b = array element
+        arr.forEach(multiply.bind(null, 2)); //2 4 6 8 10 // a = 2, b = array element //make sure not need to pass perenthesis () 
+
+8. Polyfill
+    Ex.:
+        // we can create our own function in js
+
+        // create function
+        Math.double(6) // 12
+        Math.double = function(number) {
+            return 2 * number
+        }
+
+        // if function already exist and we don't want to overright then run this
+        if(Math.max == null) {
+            Math.max = function(...numbers) {
+                return max[0]
+            }
+        }
+
+9. prototype
+
+        // if want to print proto then
+        Object.getPrototypeOf(person)
+
+        // incaptulation
+        class Person {
+            #username = "Kaushik" // this is the private variable because it's start within #
+            _name = "Rutik" // this is the protected variable because it's start within _
+        }
+
+10. Pure function
+    - pure function not effect on outside of function's code
+    - Ex.:
+        const arr = [1,2,3,4,5];
+
+        // this is not pare function because in this case also change arr value (due to references)
+        function addEle(element) {
+            arr.push(element)
+        }
+
+        // pure function because this code not effect any code of outside of function
+        function addEle(a, element) {
+            return [...a, element];
+        }
+
+11. Immutability
+    - Ex.:
+        // this not immutable
+            // because arr value will be change
+            const arr = [1,2,3,4,5]
+            arr.push(6)
+
+            // because name will be change
+            const person = {
+                name: "Kaushik",
+            }
+            person.name = "John"
+            console.log(perons.name) // John
+
+        // immutability
+        const person = Object.freeze({
+            name: "Kaushik",
+        });
+        person.name = "John"
+        console.log(person.name) // kaushik (not john)
+
+        // but here is one issue with freeze
+        // Object.freeze only work with object's first property, this is not work with sub property like
+        const person = Object.freeze({
+            name: "kaushik",
+            friend: ["rutik", "kaushik1"],
+            number: Object.freeze([1,2,3]),
+            address: {
+                street: "123"
+            }
+        })
+        person.address.street = "456"
+        console.log(person.address.street); // 456 because freeze function not work with sub object property
+        console.log(person.friend.push("rutik1")); // ["rutik", "kaushik1", "rutik1"] because freeze function not work with sub object property
+        console.log(person.number.push(4)); // [1,2,3] because freeze
+
+        // we have to use following way for all sub property
+        function deepFreeze(object) {
+            Object.values(object).forEach(value => {
+                if(value && typeof value === "object") {
+                    deepFreeze(value)
+                }
+            })
+            return Object.freeze(object)
+        }
+
+
+12. Higher Order Function
+    Ex.:
+        - map() is higher order function (map, filter, etc.)
+
+        - we can create our own higher order function
+        const array = [1, 2, 3, 4, 5];
+        const newArray = everyOtherMap(array, element => element * 2)
+        everyOtherMap(a, func) {
+            return a.map(element => func(element))
+        }
+
+        // another example
+        const people = [
+            {
+                name: "Kaushik",
+                number: [1,2]
+            },
+            {
+                name: "rutik",
+                number: [3]
+            },
+            {
+                name: "Kaushik",
+                number: [1,2]
+            }
+        ]
+        const numberGroup = groupBy(people, person => person.number.length) // group by with number count
+        const nameGroup = groupBy(people, person => person.name) // group by with name
+
+        function groupBy(a, func) {
+            return a.reduce((grouping, element) => {
+                const key = func(element)
+                if(grouping[key] == null) grouping[key] = []
+                grouping[key].push(element)
+                return grouping
+            }, {})
+        }
+
+13. Currying
+    - Ex.:
+
+        // normal function
+        function sum(a, b) {
+            return a + b
+        }
+        sum(1, 2) // 3
+
+        // curryping function
+        function sum(a) {
+            return (b) => {
+                return a + b
+            }
+        }
+        sum(1)(2) // 3 because of curring, it's similur like bind method
+
+        // with bind
+        function sum(a, b) {
+            return a + b
+        }
+        console.log(sum.bind(null, 1)(2)) // 3
+
+        
+14. Composition
+

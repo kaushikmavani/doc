@@ -1,0 +1,636 @@
+
+=============
+|  NODE JS  |
+=============
+
+1. Create Server -
+    const http = require('http')
+    const server = http.createServer((req, res) => {
+        console.log(req)
+    })
+    server.listen(3000)
+
+
+2. If I want to exit server then add process.exit() like -
+    const http = require('http')
+    const server = http.createServer((req, res) => {
+        console.log(req)
+        process.exit() // exit from run server
+    })
+    server.listen(3000)
+
+
+3. get url, method and headers from request
+    const server = http.createServer((req, res) => {
+        console.log(req.url)
+        console.log(req.method)
+        console.log(req.headers)
+    })
+
+
+4. Send response -
+    const server = http.createServer((req, res) => {
+        
+        // set header
+        res.setHeader('Content-Type', 'text/html') 
+        
+        // write res
+        res.write('<html>')
+        res.write('<head><title>Title</title></head>')
+        res.write('<body><h1>Hello from Node js!</h1></body>')
+        res.write('</html>')
+        res.end()
+    })
+
+
+5. Send resposne with redirect url
+    // writeHead (statusCode, headers) 
+    res.writeHead(302, {
+        'Location': '/'
+    })
+    -- or --
+    // we can also pass indivitual
+    res.statusCode = 302
+    res.setHeader('Location', '/')
+
+
+6. Get body with post request without error handing -
+    - request -> stream -> convert into few chunks -> Buffer
+    - so we need to concat chunks into Buffer
+    - Ex.
+
+        if(req.url === "/message" && req.method === "POST") {
+
+            const body = []
+            req.on('data', chunk => {
+                body.push(chunk) // push all the chunk data into body array
+            })
+
+            return req.on('end', () => {
+                const parseBody = Buffer.concat(body).toString() // parse body
+                const message = parseBody.split("=")[1]
+
+                // store file with writeFileSync function
+                fs.writeFileSync('Message.txt', message) // it's waiting until store
+                res.statusCode = 302
+                res.setHeader('Location', '/')
+                return res.end()
+
+                -- or --
+
+                // store file with writeFile function
+                fs.writeFile('Message.txt', message, error => { // if error not exist then error is null (but error not handing for now)
+                    res.statusCode = 302
+                    res.setHeader('Location', '/')
+                    return res.end()
+                })
+            })
+        }
+
+
+7. use module.export -
+    
+    const requestHandler = (req, res) => {}
+
+    I can export above function in following ways:
+    const handler = require('filname')
+    module.exports = requestHandler
+    -- or --
+    const {handler} = require('filname') // must be same name (handler), but we can use discructure for rename ( {handler: anyName} ) 
+    module.exports = {
+        handler: requestHandler
+    }
+    -- or --
+    const {handler} = require('filname') // must be same name (handler), but we can use discructure for rename ( {handler: anyName} ) 
+    module.exports.handler = requestHandler
+    -- or --
+    const {handler} = require('filname') // must be same name (handler), but we can use discructure for rename ( {handler: anyName} ) 
+    exports.handler = requestHandler // module. is not required (here is not javascript magic, but its global) (also check following note)
+
+    // note:
+    // I can not use in this way
+    const handler = require('filname')
+    exports = requestHandler 
+    //module. is not required as you seen above but in this case we have to add module.exports compalsory
+    // insort - module. is not required if exist after exports.{text}
+    // ex, 
+        exports.handler = requestHandler // valid
+        exports = requestHandler // not valid (because exports not use single, add either module. or object property name after exports)
+            // so we have to use this way
+            module.exports = requestHandler
+            -- or --
+            exports.routes = requestHandler
+
+
+
+8. run with npm
+    {
+        "name": "prac",
+        "version": "1.0.0",
+        "description": "Prac",
+        "main": "app.js",
+        "scripts": {
+            "test": "echo \"Error: no test specified\" && exit 1",
+            "start": "node app.js", // cmd for run this - npm start
+            "start-server": "node app.js" // cmd for run this - npm run start-server // we need to "run" keyword add beause custom name while above "start" is special
+        },
+        "author": "",
+        "license": "ISC"
+    }
+
+
+9. run with nodemon
+    - cmd for install: npm install nodemon --save-dev // --save-dev --> its for development not ignore for production
+    {
+        "name": "prac",
+        "version": "1.0.0",
+        "description": "Prac",
+        "main": "app.js",
+        "scripts": {
+            "test": "echo \"Error: no test specified\" && exit 1",
+            "start": "nodemon app.js", // cmd for run this - npm start
+            "start-server": "nodemon app.js" // cmd for run this - npm run start-server // we need to "run" keyword add beause custom name while above "start" is special
+        },
+        "author": "",
+        "license": "ISC"
+    }
+
+
+
+=============
+|  Express  |
+=============
+
+10. install express -
+    - npm i --save express
+
+
+11. add express - 
+    const express = require('express')
+    const app = express()
+    const server = http.createServer(app)
+    server.listen(3000)
+
+
+12. express works - 
+    - request -> middleware -> other middleware -> response
+    - ex.
+        const http = require('http')
+        const express = require('express')
+        const app = express()
+
+        app.use((req, res, next) => {
+            console.log('hi')
+            
+            // if we don't call this callback function then its not work ahead and not go to next use function (middleware)
+            next() 
+        })
+
+        app.use((req, res, next) => {
+            console.log('hello')
+            
+            // send response - we don't need to set header because express set default text/html
+            // we must be call next (callback) function or send response, until we send next (call) or response request its only running
+            res.send('<h1>Hello from Express!</h1>') 
+        })
+
+        const server = http.createServer(app)
+        server.listen(3000)
+
+
+13. we can also create server in this way - 
+    const http = require('http')
+    const express = require('express')
+    const app = express()
+    app.use((req, res, next) => {
+        console.log('hi')
+        next() 
+    })
+    app.use((req, res, next) => {
+        console.log('hello')
+        res.send('<h1>Hello from Express!</h1>') 
+    })
+    const server = http.createServer(app)
+    server.listen(3000)
+
+    -- or --
+
+    // no need to use http with express
+    const express = require('express')
+    const app = express()
+    app.use((req, res, next) => {
+        console.log('hi')
+        next() 
+    })
+    app.use((req, res, next) => {
+        console.log('hello')
+        res.send('<h1>Hello from Express!</h1>') 
+    })
+    app.listen(3000)
+
+
+14. Add route in express -
+    const express = require('express')
+    const app = express()
+
+    app.use('/add-message', (req, res, next) => {
+        res.send('<h1>Send Message</h1>')
+    })
+
+    app.use('/', (req, res, next) => {
+        res.send('<h1>Hello from Express!</h1>')
+    })
+
+    app.listen(3000)
+
+
+15. use body-parser package for post request
+    const express = require('express')
+    const bodyParser = require('body-parser')
+
+    const app = express()
+
+    app.use(bodyParser.urlencoded({extended: false})) // use body-parser
+
+    app.use('/products/add', (req, res, next) => {
+        res.send('<form method="post" action="/products/store"><input type="text" name="product_name"><button>Add Product</button></form>')
+    })
+    app.use('/products/store', (req, res, next) => {
+        console.log(req.body) // if we don't add above body-parser package then its return undefined
+        res.redirect('/')
+    })
+    app.listen(3000)
+
+
+15. Add get and post route in express
+    const express = require('express')
+    const bodyParser = require('body-parser')
+    const app = express()
+
+    app.use(bodyParser.urlencoded({extended: false})) // use body-parser
+
+    // get request using app.get --> its only check get request time
+    app.get('/products/add', (req, res, next) => {
+        res.send('<form method="post" action="/products/store"><input type="text" name="product_name"><button>Add Product</button></form>')
+    })
+
+    // post request using app.post --> its only check post request time
+    app.post('/products/store', (req, res, next) => {
+        console.log(req.body) // if we don't add above body-parser package then its return undefined
+        res.redirect('/')
+    })
+    app.listen(3000)
+
+
+16. use express router -
+    app.js
+    ------
+    const express = require('express')
+    const bodyParser = require('body-parser')
+
+    const app = express()
+
+    const adminRoutes = require('./routes/admin')
+    const shopRoutes = require('./routes/shop')
+
+    app.use(bodyParser.urlencoded({extended: false}))
+
+    app.use(adminRoutes)
+    app.use(shopRoutes)
+
+    app.listen(3000)
+
+    admin.js
+    --------
+    const express = require('express')
+    const routes = express.Router()
+    routes.get('/products/add', (req, res, next) => {
+        res.send('<form method="post" action="/products/store"><input type="text" name="product_name"><button>Add Product</button></form>')
+    })
+    routes.post('/products/store', (req, res, next) => {
+        console.log(req.body)
+        res.redirect('/')
+    })
+    module.exports = routes
+
+    shop.json
+    ---------
+    const express = require('express')
+    const routes = express.Router()
+    routes.get('/', (req, res, next) => {
+        res.send('<h1>Welcome to Shop</h1>')
+    })
+    module.exports = routes
+
+
+17. set 404 page not found
+    const express = require('express')
+    const bodyParser = require('body-parser')
+    const app = express()
+    const adminRoutes = require('./routes/admin')
+    const shopRoutes = require('./routes/shop')
+
+    app.use(bodyParser.urlencoded({extended: false}))
+
+    app.use(adminRoutes)
+    app.use(shopRoutes)
+
+    // set page not found.
+    app.use((req, res, next) => {
+        res.status(404).send('<h1>Page not found.</h1>')
+    })
+
+    app.listen(3000)
+
+
+18. route group -
+    const express = require('express')
+    const bodyParser = require('body-parser')
+    const app = express()
+    const adminRoutes = require('./routes/admin')
+    const shopRoutes = require('./routes/shop')
+
+    app.use(bodyParser.urlencoded({extended: false}))
+
+    app.use('/admin', adminRoutes)
+    app.use(shopRoutes)
+
+    // set page not found.
+    app.use((req, res, next) => {
+        res.status(404).send('<h1>Page not found.</h1>')
+    })
+
+    app.listen(3000)
+
+
+19. Add html page and also use path -
+    const path = require('path')
+    const express = require('express')
+
+    const routes = express.Router()
+
+    routes.get('/products/add', (req, res, next) => {
+
+        // load html page using path
+        res.sendFile(path.join(__dirname, '../', 'views', 'admin', 'products', 'add.html'))
+        -- or --
+        res.sendFile(path.join(__dirname, '..', 'views', 'admin', 'products', 'add.html'))
+    })
+
+    routes.post('/products/store', (req, res, next) => {
+        console.log(req.body)
+        res.redirect('/')
+    })
+
+    module.exports = routes
+
+
+20. we can use util for root path - 
+    const path = require('path')
+    const express = require('express')
+    const routes = express.Router()
+
+    const rootDir = require('./util/path')
+
+    routes.get('/products/add', (req, res, next) => {
+        // load html page using path
+        res.sendFile(path.join(rootDir, 'views', 'admin', 'products', 'add.html'))
+    })
+    module.exports = routes
+    
+    /util/path.js
+    -------------
+    const path = require('path')
+    module.exports = path.dirname(require.main.filename)
+
+
+21. we can not load css or public folder direct in file in express
+    we have to add static load -
+    ex. -
+        const express = require('express')
+        const bodyParser = require('body-parser')
+        const path = require('path')
+
+        const app = express()
+
+        const rootDir = require('./util/path')
+        const adminRoutes = require('./routes/admin')
+        const shopRoutes = require('./routes/shop')
+
+        app.use(bodyParser.urlencoded({extended: false}))
+
+        // like this
+        app.use(express.static(path.join(rootDir, 'public')))
+
+        app.use('/admin', adminRoutes)
+        app.use(shopRoutes)
+
+        app.use((req, res, next) => {
+            res.status(404).sendFile(path.join(rootDir, 'views', 'errors', '404.html'))
+        })
+
+        app.listen(3000)
+
+        add.html
+        --------
+        // here we don't need to mention public folder because we have already in above app. file
+        <link rel="stylesheet" href="/css/main.css">
+
+
+22. View engine - 
+
+    ejs - <p><%= title %></p>
+    pug - #{title}
+    express-Handlebars - {{ title }}
+
+
+23. Add pug file instead of html file
+    - install pug
+    - npm i --save pug
+    - use: 
+        print - #{title}
+        foreach loop - each product in prods
+        if statement - 
+            if prods.length > 0
+                p Product available
+            else 
+                p Proudct not available
+
+    - 
+    routes.get('/', (req, res, next) => {
+        console.log(adminData.products)
+        // res.sendFile(path.join(rootDir, 'views', 'shop.html'))
+
+        // with pug
+        res.render('shop')
+
+        // pug with send data
+        res.render('shop', {prods: adminData.products, title: 'Shop'})
+    })
+
+
+24. Make layout for pug file (for common header and footer)
+    layouts/main-layouts.pug
+    ------------------------
+    doctype html
+    html(lang="en")
+        head
+            meta(charset="UTF-8")
+            meta(http-equiv="X-UA-Compatible", content="IE=edge")
+            meta(name="viewport", content="width=device-width, initial-scale=1.0")
+            title #{pageTitle}
+            link(rel="stylesheet", href="/css/main.css")
+            block styles  --------------> for add style
+        body 
+            header.main-header
+                nav.main-header__nav
+                    ul.main-header__item-list
+                        li.main-header__item(class=(path === "/admin/products/add" ? "active" : ""))
+                            a(href="/admin/products/add") Add Product
+                        li.main-header__item(class=(path === "/" ? "active" : ""))
+                            a(href="/") Shop
+            block content  --------------> for add content
+
+    shop.pug
+    --------
+    extends ../../layouts/main-layout.pug
+
+    block content
+        main
+            form(action="/admin/products/store", method="post") 
+                .form-control
+                    label(for="") Product Name
+                    input(type="text", name="product_name")
+                button Add Product
+
+
+25. Active header menu -
+    layouts/main-layout.pug
+    -----------------------
+    header.main-header
+        nav.main-header__nav
+            ul.main-header__item-list
+                li.main-header__item(class=(path === "/admin/products/add" ? "active" : ""))
+                    a(href="/admin/products/add") Add Product
+                li.main-header__item(class=(path === "/" ? "active" : ""))
+                    a(href="/") Shop
+
+    admin.js
+    --------
+    routes.get('/products/add', (req, res, next) => {
+        res.render('admin/products/add', {pageTitle: "Add Product", path: '/admin/products/add'})
+    })
+
+    shop.js
+    --------
+    routes.get('/', (req, res, next) => {
+        res.render('shop', {prods: adminData.products, pageTitle: 'Shop', path: '/'})
+    })
+
+    - we have to pass path and pageTitle from all the fileLoader, which extends layout because have used that both in layout file
+
+
+26. Add express-handlebar file instead of html file
+    - install express-Handlebars
+    - npm i --save express-handlebars
+    - use: 
+        print - {{title}}
+        if statement and foreach - 
+            {{#if hasProducts}}
+                {{#each products}} //always return single product which we can access with this, check below line
+                    <p>{{this.product}}</p>
+                {{/each}}
+            {{else}}
+                <p>Proudct not available</p>
+            {{/if}}
+
+    - 
+    app.js
+    ------
+    const { engine } = require('express-handlebars')
+    app.engine('hbs', engine({
+        layoutsDir: "views/layouts/",
+        defaultLayout: "main-layout",
+        extname: 'hbs'
+    }))
+    app.set('view engine', 'hbs')
+    app.set('views', 'views')
+    
+
+27. Add ejs file instead of html file
+    - we can not use layouts
+    - we can use partials instead of layout
+    - we can also use vanilla js in this file
+    - install ejs
+    - npm i --save ejs
+    - use: 
+        print - <%= title %>
+        for loop - <% for (let product of products) %>
+        if statement - 
+            <% if(prods.length > 0) { %>
+                <p>Product available</p>
+            <% } else { %>
+                <p>Proudct not available</p>
+            <% } %>
+        include partials -
+            <%- include('includes/')%>
+
+    - setting for ejs view file
+    app.js
+    ------
+    app.set('view engine', 'ejs')
+    app.set('views', 'views')
+
+
+28. Controller
+29. Model
+
+// for session
+express-session
+connect-mongodb-session
+
+// for hash password
+bcryptjs
+
+// for csrf
+csurf or csrf
+
+// for flash message
+connect-flash
+
+// for send mail
+Email:sendgrid
+nodemailer
+nodmeailer-sendgrid-transport
+
+// for generate token
+crypto (not need to install because already) for generate token
+
+// for validation
+express-validator
+
+// for image upload
+for image = use multer
+
+// for inline view and download
+*-----
+fs.readFile(filepath, (err, data) => {
+if(err) return err
+res.setHeader('Content-Type', 'application/pdf')
+res.setHeader('Content-Disposition', 'inline; filename="test"') // open in browser
+res.setHeader('Content-Disposition', 'attached; filename="test"') // download
+res.send(data)
+})
+
+// for payment
+stripe 
+
+// for cors error
+app.use((req, res, next) => {
+    res.setHeader('Access-Content-Allow-Origin', '*'); // you can also set perticular domain name instead of *
+    res.setHeader('Access-Content-Allow-Method', 'GET, POST, PUT, PATCH, DELETE'); // you can also set perticular domain name instead of *
+    res.setHeader('Access-Content-Allow-Headers', 'Content-Type, Authorization'); // content-type and Authorization must be pass from client side
+})
+
+// for jwt
+jsonwebtoken
