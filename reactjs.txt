@@ -1,0 +1,1194 @@
+
+1. React never show null, undefined, false in dom, but it's showing "0"
+2. React dev most mistake 
+    <h1 onClick={data()}></h1> // not good -> it will call the function and set the returned value in onclick
+    <h1 onClick={data}></h1> // good
+3. Virtual DOM
+    -> react check virtualy and find the diff from old and new on rerender time
+    -> if any changes exists then it will replace that only
+4. Lifecycle
+    -> mounting
+    -> matches and rerender
+    -> unmounting
+        -> unmounting only happen when we change state
+            -> because withtout state change never rerender component
+5. Only rerender component when we change state, so when we need to rerender we have to change state anyhow
+6. We should always use pure function (component)
+7. Must add to key attr for identify when use loop 
+8. when use fragement we need to add keyword if we want to use under the loop
+    -> ex:
+      import { Children, Fragemen, Suspense, useDeferredValue, useTransition } from "react"
+      items.map(item => {
+        return <Fragement key={item.id}>
+          <h2>test</h2>
+        </Fragement>
+      })
+9. Hook Rules:  
+    // Never use hook in condition like:
+    export function App() {
+      const [count, setCount] = useState("test");
+
+      // invalid
+      if(count > 5) {
+        useEffect(() => {
+          console.log(count)
+        }, [count])
+      }
+
+      // invalid
+      if(count > 5) return "<h1>Invlid</h1>" // its invalid -> you can not even use condition like this
+
+      // valid
+      useEffect(() => {
+        if(count > 5) {
+          console.log(count)
+        }
+      }, [count])
+
+      return <h1 onClick={() => setCount(count => count + 1)}>Hi {count}</h1>
+    }
+10. we should define state as local as possible
+    -> If you don't need anyother component instead of single child component, then you should define those states in child compo
+11. you never should use derived state
+    -> You shouldn't set state in other state's initial value, otherwise when change first state then it won't update second one 
+    -> and also you make sure about array as a initial value
+      -> when you are set array of obj in first state's initial value
+        -> now you are filter that array and set it to diff state then also it's "not valid" 
+
+Hooks:
+------
+
+1. useState()
+    // when I change any state at that time, full component render
+
+    export function App() {
+        const [name, setName] = useState("test");
+        const [age, setAge] = useState(14);
+
+        return <h1>Hi {name} {age}</h1>
+    }
+
+    // It's not good to use set function with () in useState value:
+    function nameData () {
+        return "name";
+    }
+    export function App() {
+        const [name, setName] = useState(nameData()); // not good -> it will call every time whenever render
+        const [name, setName] = useState(nameData); // good -> it's not call every time whenever render
+        const [age, setAge] = useState(14);
+
+        return <h1>Hi {name} {age}</h1>
+    }
+
+    // You can use set function (second param) in this way:
+    function nameData () {
+        return "name";
+    }
+    export function App() {
+        const [name, setName] = useState(nameData);
+        const [age, setAge] = useState(14);
+
+        function updateName() {
+            setName("name_new");
+        }
+
+        // not good -> because of () -> it will call the function
+        return <h1 onclick={updateName()}>Hi {name} {age}</h1>
+
+        // good
+        return <h1 onclick={updateName}>Hi {name} {age}</h1>
+
+        // You can also use in this way
+        // good
+        return <h1 onclick={() => setName(currentName => currentName+"_new")}>Hi {name} {age}</h1>
+    }
+
+    // You can not use set function multiple time
+    export function App() {
+        const [name, setName] = useState(nameData);
+        const [age, setAge] = useState(14);
+
+        function updateName() {
+            // valid
+            setName("name_new");
+
+            // invalid -> 2 times -> it will not inc +2 -> react set value when render
+            setAge(age + 1); 
+            setAge(age + 1);
+
+            // valid
+            setAge(currentAge => currentAge + 1); 
+        }
+
+        // also valid
+        return <h1 onclick={() => setAge(currentAge => currentAge + 1)}>Hi {name} {age}</h1>
+    }
+
+    // if you are using useState for element's value then you need to set default value
+    // otherwise it's consider null and its never show in the dom
+    export function App() {
+
+        // invalid -> useState default value not setted -> I got name value always false and value attribute is never consider
+        const [name, setName] = useState();
+        return <input name="name" value={name} /> 
+
+        // valid
+        const [name, setName] = useState("");  // setted default blank string
+        return <input name="name" value={name} />
+    }
+
+
+2. useEffect
+    -> it will run 2 time if strick mode enable (bydefault enable)
+    -> so, we need to clear out old one you can check following ex of settimeout and call API using fatch
+    -> we should have to set dependency, whenever we want to chage state from useEffect
+
+    // every render time
+    useEffect(() => {
+        console.log("Render")
+    })
+
+    // it will only print once
+    // mount timeout mount and unmount time unmount
+    useEffect(() => {
+        console.log("Mount")
+    
+        return () => {
+          console.log("Unmount")
+        }
+    }, [])
+
+    // when I change toggle (dependency array) at that time effect
+    useEffect(() => {
+        setChild(toggle ? <Child /> : "")
+    }, [toggle])
+
+    // when I need to console log after 1 second with latest value
+    // when I change under 1 sec then it will skip and give it latest value
+    useEffect(() => {
+        const timeout = setTimeout(function () {
+          console.log("testing")
+        }, 1000)
+    
+        return () => {
+          clearTimeout(timeout) // it will clear old setted timeout
+        }
+    }, [name])
+
+    return <input type="text" onChange={(e) => setName(e.target.value)} />
+
+    // fetch api using useEffect
+    function App() {
+        const [isLoading, setIsLoading] = useState(false)
+        const [isError, setIsError] = useState(false)
+        const [userData, setUserData] = useState()
+      
+        useEffect(() => {
+          setIsLoading(true)
+          setIsError(false)
+          const controller = new AbortController()
+          fetch("https://jsonplaceholder.typicode.com/users", {
+            signal: controller.signal,
+          })
+            .then((res) => {
+              if (res.ok) {
+                return res.json()
+              } else {
+                return Promise.reject(res)
+              }
+            })
+            .then((res) => {
+              setIsLoading(false)
+              setUserData(res)
+            })
+            .catch((err) => {
+              if (err?.name === "AbortError") return
+              setIsError(true)
+            })
+            .finally(() => {
+              if(controller.signal.aborted) return
+              setIsLoading(false)
+            })
+      
+          return () => {
+            controller.abort()
+          }
+        }, [])
+      
+        return (
+          <>
+            {isLoading ? "Loading.." : isError ? "Error.." : JSON.stringify(userData)}
+          </>
+        )
+    }
+
+3. useRef
+    -> when we want change value without re-render
+    -> ex.
+      import { useEffect } from "react"
+    
+      // we can change ref value without re-render
+      function App() {
+        const [name, setName] = useState("")
+        const inputRef = useRef()
+
+        // valid
+        useEffect(() => {
+          console.log(inputRef.current) // <input value>
+        }, [name])
+
+        // valid -> if we focus by default first time
+        useEffect(() => {
+          console.log(inputRef.current.focus())
+        }, [])
+
+        // valid -> if we want to get value of input
+        useEffect(() => {
+          console.log(inputRef.current.value) // input value
+        }, [])
+
+        return <>
+          <input ref={inputRef} value={name} onChange={(e) => setName(e.target.value)} />
+        </>
+      }
+      
+
+4. useMemo
+    -> when we want improve performance then we need to use this Hook
+    -> it's only using for improve performance
+    -> ex.:
+      import { useState, useMemo } from "react"
+
+      const List = Array(1_000_000).fill().map((_, i) => i + 1)
+      
+      function App() {
+        const [query, setQuery] = useState("")
+      
+        // it's taking so much time because it's finding in big array(List)
+        const filteredList = List.filter(n => n.toString().includes(query))
+      
+        // that's why coming useMemo (improve performance)
+        // it's only running when query is diff than previous, if the same then it's not call and return prev value 
+        const filteredList = useMemo(() => {
+          return List.filter(n => n.toString().includes(query))
+        }, [query])
+      
+        console.log(filteredList)
+        
+        return <>
+          <input type="text" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </>  
+      }
+
+
+5. useCallBack
+      -> it will return only func
+
+      import { useEffect, useState } from "react"
+
+      function App() {
+        const [name, setName] = useState("")
+        const [age, setAge] = useState(20)
+
+        // invalid
+        // -> I just want to call printName function when I change name
+        // -> It's fine but when I change age, then also it will call
+        // -> Because when I change age at that time component will be re-render, so func will be re-define and useEffect call again (because it's diff func to prev func)
+        function printName() {
+          console.log(name)
+        }
+
+        useEffect(() => {
+          console.log("In Effect")
+          printName()
+        }, [printName])
+        
+        // technically valid -> technically it's work but here is the one problem
+        // -> what if the printName function is there in the diff page, at that time we can't able to pass dependency in useEffect
+        function printName() {
+          console.log(name)
+        }
+        
+        useEffect(() => {
+          console.log("In Effect")
+          printName()
+        }, [name])
+
+        // invalid
+        // -> And also, what if the printName function change two state and we forget to pass dependency in useEffect, because that func was in diff page
+        function printName() {
+          console.log(name)
+          console.log(age)
+        }
+        
+        useEffect(() => {
+          console.log("In Effect")
+          printName()
+        }, [name])
+
+        // valid -> that's why we use useCallBack
+        // -> it will check the func is diff then it's call otherwise return old one
+        const printName = useCallback(() => {
+          console.log(name)
+        }, [name])
+      
+        useEffect(() => {
+          console.log("In Effect")
+          printName()
+        }, [printName])
+
+        // but, you'd think that we can also do this with useMemo
+        // -> generally, we will use useMemo for "improve performance" and "veriable related stuff" (dependency -> state)
+        // -> and we will use useCallBack for "func related stuff" (dependency -> func), because it's return only func
+
+          // invalid
+          // so we can't use in this way using useMemo
+          const printName = useMemo(() => {
+            console.log(name)
+          }, [name])
+        
+          useEffect(() => {
+            console.log("In Effect")
+            printName()  // error -> you have use func, but it's normal veriable
+          }, [printName])
+
+          // valid
+          const printName = useCallBack(() => {
+            console.log(name)
+          }, [name])
+        
+          useEffect(() => {
+            console.log("In Effect")
+            printName()  // valid -> because useCallBack return func
+          }, [printName])
+
+        return (
+          <>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
+            <input
+              type="number"
+              value={age}
+              onChange={(e) => setAge(e.target.value)}
+            />
+          </>
+        )
+      }
+
+  
+6. Custom Hook
+      -> You can also create your own custom hook
+      import { useEffect, useState } from "react"
+
+      const URLS = {
+        USER_API: "https://jsonplaceholder.typicode.com/users",
+        POST_API: "https://jsonplaceholder.typicode.com/posts",
+        COMMENT_API: "https://jsonplaceholder.typicode.com/comments",
+      }
+
+      export default function App() {
+        const [category, setCategory] = useState(URLS.USER_API)
+        const { isLoading, isError, data } = useFetch(category) // custom hook
+
+        return (
+          <>
+            <label htmlFor="users">
+              <input
+                type="radio"
+                name="category"
+                id="users"
+                value={URLS.USER_API}
+                onChange={(e) => setCategory(e.target.value)}
+                checked={category === URLS.USER_API}
+              />
+              Users
+            </label>
+            <label htmlFor="posts">
+              <input
+                type="radio"
+                name="category"
+                id="posts"
+                value={URLS.POST_API}
+                onChange={(e) => setCategory(e.target.value)}
+                checked={category === URLS.POST_API}
+              />
+              Posts
+            </label>
+            <label htmlFor="comments">
+              <input
+                type="radio"
+                name="category"
+                id="comments"
+                value={URLS.COMMENT_API}
+                onChange={(e) => setCategory(e.target.value)}
+                checked={category === URLS.COMMENT_API}
+              />
+              Comments
+            </label>
+
+            <p>{isLoading ? "Loading..." : isError ? "Error." : data ? data : ""}</p>
+          </>
+        )
+      }
+
+      function useFetch(url) {
+        const [isLoading, setIsLoading] = useState(false)
+        const [isError, setIsError] = useState(false)
+        const [data, setData] = useState("")
+
+        useEffect(() => {
+          const controller = new AbortController()
+          fetch(url, {
+            signal: controller.signal,
+          })
+            .then((res) => {
+              if (res.ok) {
+                return res.json()
+              } else {
+                return Promise.reject()
+              }
+            })
+            .then((res) => {
+              setData(JSON.stringify(res))
+            })
+            .catch((err) => {
+              if (err?.name === "AbortError") return
+              setIsError(true)
+              setIsLoading(false)
+            })
+            .finally(() => {
+              setIsLoading(false)
+            })
+
+          return () => {
+            setIsLoading(true)
+            setIsError(false)
+            setData("")
+            controller.abort()
+          }
+        }, [url])
+
+        return {
+          isLoading,
+          isError,
+          data,
+        }
+      }
+
+
+7. useReducer
+      import { useEffect, useReducer, useState } from "react"
+
+      const URLS = {
+        USER_API: "https://jsonplaceholder.typicode.com/users",
+        POST_API: "https://jsonplaceholder.typicode.com/posts",
+        COMMENT_API: "https://jsonplaceholder.typicode.com/comments",
+      }
+
+      export default function App() {
+        const [category, setCategory] = useState(URLS.USER_API)
+        const { isLoading, isError, data } = useFetch(category)
+
+        return (
+          <>
+            <label htmlFor="users">
+              <input
+                type="radio"
+                name="category"
+                id="users"
+                value={URLS.USER_API}
+                onChange={(e) => setCategory(e.target.value)}
+                checked={category === URLS.USER_API}
+              />
+              Users
+            </label>
+            <label htmlFor="posts">
+              <input
+                type="radio"
+                name="category"
+                id="posts"
+                value={URLS.POST_API}
+                onChange={(e) => setCategory(e.target.value)}
+                checked={category === URLS.POST_API}
+              />
+              Posts
+            </label>
+            <label htmlFor="comments">
+              <input
+                type="radio"
+                name="category"
+                id="comments"
+                value={URLS.COMMENT_API}
+                onChange={(e) => setCategory(e.target.value)}
+                checked={category === URLS.COMMENT_API}
+              />
+              Comments
+            </label>
+
+            <p>{isLoading ? "Loading..." : isError ? "Error." : data ? data : ""}</p>
+          </>
+        )
+      }
+
+      const ACTIONS = {
+        FETCH: "FETCH",
+        SUCCESS: "SUCCESS",
+        ERROR: "ERROR",
+      }
+
+      function reducer(state, { type, payload: { data } = {} }) { // Param: state, actions
+        switch (type) {
+          case ACTIONS.FETCH:
+            return {
+              isLoading: true,
+              isError: false,
+              data: "",
+            }
+          case ACTIONS.SUCCESS:
+            return {
+              isLoading: false,
+              isError: false,
+              data: data,
+            }
+          case ACTIONS.ERROR:
+            return {
+              isLoading: false,
+              isError: true,
+              data: "",
+            }
+          default:
+            return state
+        }
+      }
+
+      function useFetch(url) {
+        const [state, dispatch] = useReducer(reducer, {
+          isLoading: false,
+          isError: false,
+          data: "",
+        }) // Params: reducer, initialValues, func of initialValues, if you want func then you need to use 3rd param (but 2nd is required and you have to update 2nd param(initialValue) in 3rd one)
+
+        useEffect(() => {
+          const controller = new AbortController()
+          fetch(url, {
+            signal: controller.signal,
+          })
+            .then((res) => {
+              if (res.ok) {
+                return res.json()
+              } else {
+                return Promise.reject()
+              }
+            })
+            .then((res) => {
+              dispatch({
+                type: ACTIONS.SUCCESS,
+                payload: { data: JSON.stringify(res) },
+              })
+            })
+            .catch((err) => {
+              if (err?.name === "AbortError") return
+              dispatch({ type: ACTIONS.ERROR })
+            })
+
+          return () => {
+            dispatch({ type: ACTIONS.FETCH })
+            controller.abort()
+          }
+        }, [url])
+
+        return state
+      }
+
+
+8. useContext
+      // App.jsx
+      import { createContext, useState } from "react"
+      import { Child } from "./Child"
+
+      export const TextContext = createContext() // first we need to create context
+
+      export default function App() {
+        const [info, setInfo] = useState(true)
+
+        function updateToggle() {
+          setInfo((info) => !info)
+        }
+
+        return (
+          <TextContext.Provider value={{ updateToggle }}>  // then we need to set provider, so we change consume that in GrandChild compo
+            <Child />
+            <p style={{ display: info ? "block" : "none" }}>
+              Lorem ipsum dolor sit amet consectetur adipisicing elit. Neque unde
+              impedit ratione nemo officiis, provident minima temporibus optio ullam
+              officia quo. Libero quo sed nemo dolor nulla similique veritatis.
+              Accusantium!
+            </p>
+          </TextContext.Provider>
+        )
+      }
+
+      // Child.jsx
+      import { GrandChild } from "./GrandChild"
+      export function Child() {
+        return <GrandChild />
+      }
+
+      // GrandChild.jsx
+      import { useContext } from "react"
+      import { TextContext } from "./App"
+
+      export function GrandChild() {
+        const { updateToggle } = useContext(TextContext)
+
+        return <button onClick={updateToggle}>Toggle Button</button>
+      }
+
+
+9. forwardRef
+      -> when we need to pass ref in any compoent
+      -> Ex.:
+        export default function App() {
+          const ref = useRef()
+        
+          function printValue() {
+            console.log(ref.current.value)
+          }
+        
+          return <Input ref={ref} onChange={printValue} />
+        }
+
+        // Input component
+        import { forwardRef } from "react"
+        function InnerComponent(props, ref) {
+          return <input ref={ref} {...props} />
+        }
+        const Input = forwardRef(InnerComponent)
+        export default Input
+      
+
+10. useLayoutEffect
+      -> Basically useEffect work after render component
+      -> But, when we need to run before render compoent at that time we need to use this hook
+      -> And also it's run only once I mean useEffect run 2 times if strick mode enable (bydefault enable), but useLayoutEffect run once.
+      -> so that, we can imporve performance for that perticular scenario
+
+  
+11. useDebugValue
+      -> use for debug
+      -> ex.
+        useDebugValue(value) // it will show in inspatch -> component -> check states
+        //or
+        useDebugValue(value, filterValue)
+
+        function filterValue(value) {
+          console.log(value + 1)
+        }
+
+
+12. useId
+      -> for generate id for html
+      -> when we want same compoent two or more times then id will define multiple time that's why it will throw the error
+      -> so, we are using this hook for dynamic generate id
+      -> Ex.: 
+        return (
+          <ContactForm />
+          <ContactForm />
+        )
+
+        // ContactForm
+        export function ContactForm() {
+          return 
+            <label htmlFor={`${id}-email`} >Email</label>
+            <input id={`${id}-email`} type="email"></input>
+
+            <label htmlFor={`${id}-name`} >Name</label>
+            <input id={`${id}-name`} type="text"></input>
+          )
+        }
+
+
+13. useImperativeHandle
+      -> when you want to get more data from other component then also you can get
+      -> you just need to create ref and pass that componet and use this hook
+      -> Ex.:
+        export default function App() {
+          const ref = useRef()
+          return (
+            <>
+              <button onClick={() => console.log(ref.current.input2.focus())}>
+                Focus
+              </button>
+              <Input type="text" ref={ref} />
+            </>
+          )
+        }
+
+        // Input component
+        import { forwardRef, useImperativeHandle, useRef } from "react"
+
+        function InnerComponent(props, ref) {
+          const input1ref = useRef()
+          const input2ref = useRef()
+
+          useImperativeHandle(ref, () => {
+            return {
+              input1: input1ref.current,
+              input2: input2ref.current,
+            }
+          })
+
+          return (
+            <>
+              <input ref={input1ref} {...props} />
+              <input ref={input2ref} {...props} />
+            </>
+          )
+        }
+
+        const Input = forwardRef(InnerComponent)
+        export default Input
+
+      -> here is the use of third param of InnerComponent function
+      -> there you have to pass dependency if you use any state
+      -> Ex.:
+        export default function App() {
+          const ref = useRef()
+        
+          return (
+            <>
+              <button onClick={() => console.log(ref.current.value)}>Focus</button>
+              <Input ref={ref} />
+            </>
+          )
+        }
+
+        function InnerComponent(props, ref) {
+          const [value, setValue] = useState("")
+        
+          useImperativeHandle(
+            ref,
+            () => {
+              return { value }
+            },
+            [value]  // here is the dependency
+          )
+        
+          return (
+            <>
+              <input
+                type="text"
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+              />
+            </>
+          )
+        }
+
+        // if you don't pass dependency in that array then 
+        // when I click on focus after add some text input then I don't get latest value
+        // it will return only value that was on rerender componet time
+        // that's why third param require if you use any state
+        
+
+14. useCallBack vs Ref
+      -> Ex.:
+      
+      // getting error
+      // you can not set focus() on input because toggle = false
+      // it's only focus when it's visible at that time we can use "useCallBack as a ref" instaed of useEffect
+      export default function App() {
+        const [toggle, setToggle] = useState(false)
+        const ref = useRef()
+      
+        useEffect(() => {
+          console.log(ref.current.focus())
+        }, [])
+      
+        return (
+          <>
+            <button onClick={() => setToggle((currentValue) => !currentValue)}>
+              Toggle
+            </button>
+            {toggle && <input type="text" ref={ref} />}
+          </>
+        )
+      }
+
+      // valid
+      export default function App() {
+        const [toggle, setToggle] = useState(false)
+        const inputRef = useCallback((input) => {
+          if (input == null) return
+      
+          input.focus()
+        }, [])
+      
+        return (
+          <>
+            <button onClick={() => setToggle((currentValue) => !currentValue)}>
+              Toggle
+            </button>
+            {toggle && <input type="text" ref={inputRef} />}
+          </>
+        )
+      }
+
+      --> if you want to still use ref then
+      export default function App() {
+        const [toggle, setToggle] = useState(false)
+        const actualInputRef = useRef()
+        
+        const inputRef = useCallback((input) => {
+          actualInputRef.current = input
+          if (input == null) return
+          input.focus()
+        }, [])
+
+        console.log(actualInputRef.current) // here print input
+      
+        return (
+          <>
+            <button onClick={() => setToggle((currentValue) => !currentValue)}>
+              Toggle
+            </button>
+            {toggle && <input type="text" ref={inputRef} />}
+          </>
+        )
+      }
+
+
+12. we need to use React.memo for improve performance
+      -> when I change any state in the component at that time it will be re-render, so other states are also load which you can see in the profiler tab in crome
+      -> at that time we need to use React.memo
+      -> Ex.:
+          function Component() {
+            const [name, setName] = useState("kaushik")
+            const [age, setAge] = useState(10)
+          
+            return (
+              <>
+                <input type="text" name="name" onChange={setName("KAUSHIK")} value={name} />
+                {age}
+              </>
+            )
+          }
+
+          export const App = memo(Component)
+
+          -> if you want to use seconds param of memo then
+
+          export const App = memo(Component, (prevProps, nextProps) => {
+            return true // prevProps and nextProps are match; so, in this time age will not load
+            return false // prevProps and nextProps are match; so, in this time age will load
+            -- or --
+            // you can also check manually like
+            return prevProps.name === nextProps.name
+          })
+
+13. when you need to render big list then you can use react window or tan stack package for react
+
+14. As prop
+      -> when you want to trit a tag like to button at that scenario we can use this 
+      -> Ex. :
+        function Component() {
+          return (
+            <>
+              <Button>Small</Button>
+              <Button>Medium</Button>
+              <Button>Large</Button>
+              <Button As="a" href="/">Link</Button>
+            </>
+          )
+        }
+
+        // javascript version
+        export function Button({ As = "button", size = "md", className = "", ...btnProps }) {
+          return (
+            <As
+              {...btnProps}
+              className={`btn ${className}`}
+            />
+          )
+        }
+
+        // typescript version
+        type ButtonProps<T extends ElementType = "button"> = {
+          As?: T,
+          size?: "sm" | "md" | "lg"
+        } & ComponentPropsWithoutRef<T>
+
+        const DEFUALT_TYPE = "button"
+
+        export function Button<T extends ElementType = DEFUALT_TYPE>({ As = "button", size = "md", className = "", ...btnProps }: ButtonProps<T>) {
+          const Component = As ?? DEFUALT_TYPE
+          return (
+            <Component
+              {...btnProps}
+              className={`btn ${className}`}
+            />
+          )
+        }
+
+15. use less useEffect
+16. controlled vs uncontrolled component
+      -> controlled component: all the state manage by itself
+      -> uncontrolled compoent: whereas all the state manage by parent component
+17. Compound Component
+      -> need to convert into multiple component
+      -> when I need to add login base on state like when header come then run that, when footer comes then run that, when prod name comes then run that, when prod offere exits then run that, or so.
+      -> at that time we need to use compound compoent
+
+18. Suspense
+      -> It will only showing when all the Children are ready to display
+      -> You can also use nested Suspense
+      -> we can use it with react query with Suspense property
+      -> when I type value in input then it will wait until comes reponse and if we add more latter in input at that time also its render once with the latest value due to useQuery suspenct, where as component will be re-render (every key press time) but useQuery will stop it until comes response
+      -> Ex. :
+        <ErrorBoundry fallback="Error...">
+          <Suspense fallback="Loading...">
+            <Post />
+            <Comments />
+          </Suspense>
+        </ErrorBoundry>
+
+        // Nested Suspense
+        <ErrorBoundry fallback="Error...">
+          <Suspense fallback="Loading...">
+            <Suspense fallback="Loading...">
+              <Post />
+            </Suspense>
+            <Comments />
+          </Suspense>
+        </ErrorBoundry>
+
+19. React.lazy
+      -> when we want to "render specific dom" only any "specific action" at that time we can use React.lazy function
+      -> until we don't run that specific action, document will be download asyncronsoly in background and whenever we call action at that time it will be render
+      -> By default we can work with only those compoent, which is the default export
+      -> If component is not default export then we can use lazy in diff way as you can see in following example
+      -> NOTE: we must need to add Suspense, otherwise lazy not work
+      -> Ex. :
+          // with defualt function
+          const comments = lazy(() => import("./comments"))
+
+          function Comments() {
+            return (
+              <Suspense fallback="loading..">
+                <NewComment />
+                <Comments />
+              </Suspense>
+            )
+          }
+
+          // components/comments.jsx
+          export default function Comments() {
+            return (
+              <ul>
+                <li>Comment 1</li>
+                <li>Comment 2</li>
+                <li>Comment 3</li>
+                <li>Comment 4</li>
+              </ul>
+            )
+          } 
+
+          // without default function
+          const comments = lazy(() => import("./comments").then(module => {
+            return { default: module.Comments }
+          }))
+
+          function Comments() {
+            return (
+              <Suspense fallback="loading..">
+                <NewComment />
+                <Comments />
+              </Suspense>
+            )
+          }
+
+          // components/comments.jsx
+          export function Comments() {
+            return (
+              <ul>
+                <li>Comment 1</li>
+                <li>Comment 2</li>
+                <li>Comment 3</li>
+                <li>Comment 4</li>
+              </ul>
+            )
+          }
+
+20. useDeferredValue
+      -> we can use this hook with two way, first is with Suspense and second is without suspenct
+      -> Explaination:
+        -> Without Suspense
+          -> Ex.:
+            // when I type the text into the input field at that time it will little stuck input and then it will be shown direct latest value and also it will be show latest value into the p tag
+              // without useDeferredValue hook
+              const [val, setVal] = useState("")
+
+              return (
+                <>
+                  <input type="text" value={val} onChange={(e) => setVal(e.target.value)} />
+                  <p>{val}</p>
+                </>
+              )
+
+            // that's why we are using useDeferredValue hook
+            // here the example -> now I have fiexed the issue of little stuck on input text type (now it's smoothly typable). but still p tag result will be shown continually (with some stuck)
+            // it's happening because when I change input value then it's will immediate priority update as you can see in profiler tab in inpact by react
+            // and print into the p tab is normal priority for the react, that's why it's little stuck on print value into the p tag, even I use useDeferredValue
+            const [val, setVal] = useState("")
+            const deferredVal = useDeferredValue(val)
+
+            return (
+              <>
+                <input type="text" value={val} onChange={(e) => setVal(e.target.value)} />
+                <p>{deferredVal}</p>
+              </>
+            )
+
+        -> With Suspense
+          -> Ex.:
+            // now input field is smooth
+            const [val, setVal] = useState("")
+            const deferredVal = useDeferredValue(val)
+
+            return (
+              <>
+                <input type="text" value={val} onChange={(e) => setVal(e.target.value)} />
+                <ErrorBoundry fallback="Error...">
+                  <Suspense fallback="Loading...">
+                    <p>{deferredVal}</p>
+                  </Suspense>
+                </ErrorBoundry>
+              </>
+            )
+            
+            // but, here is the one little problem, whenever I change value at that time it will little take time to update p tag's text
+            // so, user can not show as we have set fallback value in suspense during loading time and it will be shown direct latest result
+            // at that time we can set manually loader
+            const [val, setVal] = useState("")
+            const deferredVal = useDeferredValue(val)
+
+            return (
+              <>
+                <input type="text" value={val} onChange={(e) => setVal(e.target.value)} />
+                { val != deferredVal ? "Loading..." : "" }  // here is the manual loader which is display even deferredVal updating
+                <ErrorBoundry fallback="Error...">
+                  <Suspense fallback="Loading...">
+                    <p>{deferredVal}</p>
+                  </Suspense>
+                </ErrorBoundry>
+              </>
+            )
+
+21. useTransition
+      -> we can use this hook with two way, first is with Suspense and second is without suspenct
+      -> Without Suspense
+        -> Ex.:
+          // whenever I click on comments and comments component take time to load with data during that time I can't able to click on other button and ui is stuck during that time
+          export default function App() {
+            const [tab, setTab] = useState()
+
+            function setOpenTab(tab) {
+              setTab(tab)
+            }
+
+            return (
+              <>
+                <button onClick={() => setOpenTab("post")}>View Post</button>
+                <button onClick={() => setOpenTab("comment")}>View Comment</button>
+                <button onClick={() => setOpenTab("auther")}>View Author</button>
+
+                {tab === "post" ? <Post /> : tab === "comment" ? <Comment /> : <Auther />}
+              </>
+            )
+          }
+
+          // that's why we use useTransition hook
+          export default function App() {
+            const [tab, setTab] = useState()
+            const [isPending, startTransition] = useTransition()
+
+            function setOpenTab(tab) {
+              // now when I click on any button at that time ui not stuck and I can also click on another button immediate and it will be shown latest result
+              startTransition(() => {
+                setTab(tab)
+              })
+            }
+
+            return (
+              <>
+                <button onClick={() => setOpenTab("post")}>View Post</button>
+                <button onClick={() => setOpenTab("comment")}>View Comment</button>
+                <button onClick={() => setOpenTab("auther")}>View Author</button>
+                
+                // you can also set loader in this way
+                {isPending && "Loading..."}
+
+                {tab === "post" ? <Post /> : tab === "comment" ? <Comment /> : <Auther />}
+              </>
+            )
+          }
+
+          // you'd think that useTransition and useDeferredValue hook are some
+          // but here is the one diff
+          // we are only use useDeferredValue when we need to work with ui related stuff
+          // where as we need to work with any state related stuff then we will use useTransition hook
+
+          // now it's not working, becuase useTransition hook only check immediate state change or not
+          // here is the setTimeout so useTransition not find any state related changes
+          // invalid
+          function setOpenTab(tab) {
+            startTransition(() => {
+              setTimeout(() => {
+                setTab(tab)
+              }, 10)
+            })
+          }
+
+          // valid
+          function setOpenTab(tab) {
+            setTimeout(() => {
+              startTransition(() => {
+                setTab(tab)
+              })
+            }, 10)
+          }
+
+      -> With Suspense
+        -> Ex.:
+          // but, here is the one little problem, whenever I clik on button at that time it will little take time to update component
+          // so, user can not show as we have set fallback value in suspense during loading time and it will be shown direct latest result same as useDeferredValue hook
+          // at that time we can set manually loader
+          export default function App() {
+            const [tab, setTab] = useState()
+            const [isPending, startTransition] = useTransition()
+
+            function setOpenTab(tab) {
+              startTransition(() => {
+                setTab(tab)
+              })
+            }
+
+            return (
+              <Suspense fallback="Loading...">
+                <button onClick={() => setOpenTab("post")}>View Post</button>
+                <button onClick={() => setOpenTab("comment")}>View Comment</button>
+                <button onClick={() => setOpenTab("auther")}>View Author</button>
+                
+                // you can also set loader in this way
+                {isPending && "Loading..."}
+
+                {tab === "post" ? <Post /> : tab === "comment" ? <Comment /> : <Auther />}
+              </Suspense>
+            )
+          }
+          
+
+            
